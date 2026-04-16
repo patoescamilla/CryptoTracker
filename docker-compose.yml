@@ -1,0 +1,64 @@
+version: "3.9"
+
+# Los 3 contenedores se comunican entre sí por esta red interna.
+# Así "backend" puede hablar con "mongo" solo usando el nombre "mongo".
+networks:
+  crypto-net:
+    driver: bridge
+
+# El volumen persiste los datos de MongoDB aunque el contenedor se reinicie.
+volumes:
+  mongo-data:
+
+services:
+
+  # ── Base de datos ──────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7               # Usa la imagen oficial, no necesitas Dockerfile
+    container_name: crypto-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db      # Datos persistentes
+    networks:
+      - crypto-net
+    # healthcheck: Docker espera a que Mongo esté listo antes de arrancar el backend
+    healthcheck:
+      test: ["CMD","mongosh","--eval","db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend ────────────────────────────────────────────────────────────
+  backend:
+    build: ./backend
+    container_name: crypto-backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy  # No arranca hasta que Mongo esté sano
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/cryptodb
+    volumes:
+      - ./logs:/app/logs         # Los logs del contenedor se guardan en tu máquina
+    networks:
+      - crypto-net
+    ports:
+      - "3001:3001"
+
+  # ── Frontend ───────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # IMPORTANTE: en EC2 cambia esto a la IP pública.
+        # El navegador del usuario corre FUERA de Docker,
+        # por eso no puede usar "backend" como hostname.
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:3001}
+    container_name: crypto-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - crypto-net
+    ports:
+      - "80:80"

@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Infraestructura base para desplegar CryptoTracker en AWS con una instancia EC2
+  y un bucket S3 para respaldo de logs.
+
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Nombre del Key Pair para conectarse por SSH a la instancia EC2
+
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t3.micro
+    Description: Tipo de instancia EC2
+
+Resources:
+  CryptoTrackerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group para CryptoTracker
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3001
+          ToPort: 3001
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: CryptoTracker-SG
+
+  CryptoTrackerBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub cryptotracker-logs-${AWS::AccountId}-${AWS::Region}
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Name
+          Value: CryptoTrackerLogs
+
+  CryptoTrackerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c2b8ca1dad447f8a
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      SecurityGroupIds:
+        - !Ref CryptoTrackerSecurityGroup
+      Tags:
+        - Key: Name
+          Value: CryptoTracker-EC2
+
+Outputs:
+  InstancePublicIp:
+    Description: IP publica de la instancia EC2
+    Value: !GetAtt CryptoTrackerInstance.PublicIp
+
+  S3BucketName:
+    Description: Nombre del bucket S3 para respaldos de logs
+    Value: !Ref CryptoTrackerBucket
+
+Metadata:
+  Comments:
+    SecurityGroupsNote: |
+      Para permitir acceso a la aplicacion deben abrirse los puertos necesarios en el
+      Security Group. En este proyecto el frontend usa el puerto 80 y el backend 3001.
+      Si se expusieran otros puertos como 3000, 5173 u 8080, tambien tendrian que
+      agregarse reglas de entrada. En produccion no se recomienda dejar 0.0.0.0/0;
+      lo ideal es restringir el origen por IP, VPN o balanceador.
