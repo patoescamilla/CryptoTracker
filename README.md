@@ -1,6 +1,6 @@
 # CryptoTracker DevOps Project
 
-Aplicacion web full stack para consultar el top 10 de criptomonedas y almacenar el historial de consultas realizadas. El proyecto fue desarrollado como evidencia de la actividad de Fundamentos de DevOps, integrando frontend, backend, base de datos, Docker, automatizacion con Bash y despliegue en AWS.
+Aplicacion web full stack para consultar el top 10 de criptomonedas y almacenar el historial de consultas realizadas. El proyecto fue desarrollado integrando frontend, backend, base de datos, Docker, automatizacion con Bash y despliegue en AWS.
 
 ## Descripcion del proyecto
 
