@@ -1,33 +1,33 @@
 # CryptoTracker DevOps Project
 
-Aplicacion web full stack para consultar el top 10 de criptomonedas y almacenar el historial de consultas realizadas. El proyecto fue desarrollado integrando frontend, backend, base de datos, Docker, automatizacion con Bash y despliegue en AWS.
+Full-stack web application for checking the top 10 cryptocurrencies and storing the history of performed queries. The project was developed by integrating a frontend, backend, database, Docker, Bash automation, and AWS deployment.
 
-## Descripcion del proyecto
+## Project Description
 
-CryptoTracker es una aplicacion que consume informacion del mercado de criptomonedas desde una API externa y muestra los resultados en una interfaz web. Cada consulta realizada queda registrada en MongoDB y tambien se generan logs en el servidor para evidenciar la operacion del sistema.
+CryptoTracker is an application that consumes cryptocurrency market information from an external API and displays the results in a web interface. Each query is stored in MongoDB, and server logs are also generated to show the system's operation.
 
-## Arquitectura
+## Architecture
 
 ```text
-Usuario
+User
    |
    v
 EC2 (AWS)
    |
    v
 Docker Compose
-   |-- Frontend (React + Nginx) -> Puerto 80
-   |-- Backend (Node.js + Express) -> Puerto 3001
-   |-- Base de datos (MongoDB) -> Puerto 27017 interno
+   |-- Frontend (React + Nginx) -> Port 80
+   |-- Backend (Node.js + Express) -> Port 3001
+   |-- Database (MongoDB) -> Internal port 27017
    |
    v
-Logs en /app/logs/app.log
+Logs in /app/logs/app.log
    |
    v
-Respaldo en S3
+Backup in S3
 ```
 
-## Tecnologias utilizadas
+## Technologies Used
 
 - React 18
 - Node.js 20
@@ -41,7 +41,7 @@ Respaldo en S3
 - AWS CloudFormation
 - GitHub
 
-## Estructura del proyecto
+## Project Structure
 
 ```text
 project/
@@ -57,20 +57,20 @@ project/
 `-- README.md
 ```
 
-## Puertos utilizados
+## Ports Used
 
-- `80`: frontend servido con Nginx
+- `80`: frontend served with Nginx
 - `3001`: backend Express
-- `27017`: MongoDB dentro de la red interna de Docker
+- `27017`: MongoDB inside the internal Docker network
 
-## Ejecucion local
+## Local Execution
 
-Requisitos:
+Requirements:
 
 - Docker
-- Docker Compose o `docker compose`
+- Docker Compose or `docker compose`
 
-Pasos:
+Steps:
 
 ```bash
 mkdir -p logs
@@ -78,29 +78,29 @@ docker compose build
 docker compose up -d
 ```
 
-Verificacion esperada:
+Expected verification:
 
 - Frontend: `http://localhost`
 - Backend: `http://localhost:3001/health`
 - Logs: `logs/app.log`
 
-Para detener la aplicacion:
+To stop the application:
 
 ```bash
 docker compose down
 ```
 
-## Despliegue en EC2
+## Deployment on EC2
 
-1. Crear la infraestructura con `cloudformation/template.yaml`.
-2. Conectarse a la instancia EC2.
-3. Instalar Git, Docker y Docker Compose.
-4. Clonar el repositorio desde GitHub.
-5. Asignar permisos a los scripts Bash.
-6. Ejecutar `./deploy.sh`.
-7. Abrir la aplicacion en `http://IP_PUBLICA_EC2`.
+1. Create the infrastructure with `cloudformation/template.yaml`.
+2. Connect to the EC2 instance.
+3. Install Git, Docker, and Docker Compose.
+4. Clone the repository from GitHub.
+5. Grant permissions to the Bash scripts.
+6. Run `./deploy.sh`.
+7. Open the application at `http://EC2_PUBLIC_IP`.
 
-Comandos usados en EC2:
+Commands used on EC2:
 
 ```bash
 sudo yum update -y
@@ -109,7 +109,7 @@ sudo service docker start
 sudo usermod -aG docker ec2-user
 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
-git clone <URL_DEL_REPOSITORIO>
+git clone <REPOSITORY_URL>
 cd CryptoTracker
 chmod +x deploy.sh start_app.sh stop_app.sh
 ./deploy.sh
@@ -119,62 +119,62 @@ chmod +x deploy.sh start_app.sh stop_app.sh
 
 ### deploy.sh
 
-Prepara y despliega la aplicacion construyendo las imagenes y levantando los contenedores con Docker Compose.
+Prepares and deploys the application by building the images and starting the containers with Docker Compose.
 
 ### start_app.sh
 
-Inicia la aplicacion con Docker Compose.
+Starts the application with Docker Compose.
 
 ### stop_app.sh
 
-Detiene la aplicacion con Docker Compose.
+Stops the application with Docker Compose.
 
-## Automatizacion con cron
+## Automation with cron
 
-Ejemplo para programar el encendido y apagado automatico en Linux:
+Example for scheduling automatic startup and shutdown on Linux:
 
 ```cron
 0 8 * * * /home/ec2-user/CryptoTracker/start_app.sh /home/ec2-user/CryptoTracker >> /home/ec2-user/start_app_cron.log 2>&1
 0 22 * * * /home/ec2-user/CryptoTracker/stop_app.sh /home/ec2-user/CryptoTracker >> /home/ec2-user/stop_app_cron.log 2>&1
 ```
 
-## Logs generados
+## Generated Logs
 
-El backend escribe eventos en `logs/app.log` con un formato como el siguiente:
+The backend writes events to `logs/app.log` using a format like the following:
 
 ```text
-[2026-04-09 10:00:00] INFO: Consulta realizada: /api/coins
-[2026-04-09 10:02:15] ERROR: Fallo MongoDB: connection refused
+[2026-04-09 10:00:00] INFO: Query performed: /api/coins
+[2026-04-09 10:02:15] ERROR: MongoDB failure: connection refused
 ```
 
-## Uso de S3
+## S3 Usage
 
-El bucket S3 creado con CloudFormation puede utilizarse para respaldar logs de la aplicacion:
+The S3 bucket created with CloudFormation can be used to back up application logs:
 
 ```bash
-aws s3 cp logs/app.log s3://NOMBRE_DEL_BUCKET/logs/app-$(date +%F-%H%M%S).log
+aws s3 cp logs/app.log s3://BUCKET_NAME/logs/app-$(date +%F-%H%M%S).log
 ```
 
-## Infraestructura como codigo
+## Infrastructure as Code
 
-El archivo `cloudformation/template.yaml` crea:
+The `cloudformation/template.yaml` file creates:
 
-- una instancia EC2
-- un bucket S3
-- un Security Group con reglas para SSH, frontend y backend
+- an EC2 instance
+- an S3 bucket
+- a Security Group with rules for SSH, frontend, and backend
 
-## Repositorio
+## Repository
 
-El proyecto debe versionarse en GitHub con al menos:
+The project should be versioned on GitHub with at least:
 
-- 3 commits significativos
-- una rama de trabajo, por ejemplo `feature/devops-delivery`
+- 3 meaningful commits
+- a working branch, for example `feature/devops-delivery`
 
-## Evidencias recomendadas
+## Recommended Evidence
 
-- aplicacion funcionando en localhost
-- stack de CloudFormation creado
-- instancia EC2 en ejecucion
-- terminal con `./deploy.sh`
-- aplicacion abierta desde la IP publica de EC2
-- logs generados en `app.log`
+- application running on localhost
+- CloudFormation stack created
+- EC2 instance running
+- terminal with `./deploy.sh`
+- application opened from the EC2 public IP
+- logs generated in `app.log`
